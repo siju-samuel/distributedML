@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package distributedML;
+
+// Paxos requires a total of (2f+1) nodes to tolerate f faulty nodes and arrive at consensus.
+// A quorum (majority) of acceptances are needed for the node to be designated as leader.
+
+// Paxos service that runs on each participating node.
+service PaxosNode {
+
+	// This node sends a proposal to every other node participating in the consensus
+	// and receives acknowledgments marking their acceptance or rejection.
+    	// The value (IP address) of the acknowledment with the highest seq_no is chosen.
+	rpc prepare(proposal) returns (ack) {}
+
+	// Requests acceptance from other nodes that the chosen value (IP) should be the leader.
+	rpc accept(request_acceptance) returns (acceptance) {}
+
+	// If majority have accepted then other nodes are notified that consensus has been achieved about a leader.
+	rpc accepted (consensus) returns (blank) {}
+
+	// Health check on participating nodes while running Paxos.
+	rpc ping (blank) returns (blank) {}
+}
+
+message proposal {
+	float seq_no = 1;
+}
+
+message ack {
+	float seq_no = 1;
+	string value = 2;
+	float seq_no_v = 3;
+}
+
+message request_acceptance{
+	float seq_no = 1;
+	string value = 2;
+}
+
+message acceptance {
+	bool accept_bool = 1;
+}
+
+message consensus { 
+	float seq_no = 1;
+	string value = 2;
+}
+
+message blank {
+}

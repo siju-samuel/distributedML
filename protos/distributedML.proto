@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package distributedML;
+
+// Main server for passing infromation around
+service ParamFeeder {
+  // Sends the parameters back and forth between server and worker
+  rpc SendParams (WorkerInfo) returns (stream SubTensor) {}
+
+  // Sends information about the next batch
+  rpc SendNextBatch (PrevBatch) returns (NextBatch) {}
+
+  // Gets gardient updates from client servers
+  rpc GetUpdates (stream SubTensor) returns (StatusCode) {}
+
+  // This call simply makes sure that all machines have begun to run Paxos. 
+  rpc ping (empty) returns (empty) {}
+
+}
+
+message SubTensor { 
+	// Length of the tensor getting passed
+	int32 tensor_len = 1; 
+	
+	// Current chunk of the tensor
+	int32 tensor_chunk = 2;
+
+	// Serialized tensor getting passed
+	bytes tensor_content = 3;
+
+	// Batch for gradient update, used to determine whether or not
+	// the gradient is stale and should be thrown out
+	int32 data_indx = 4;
+}
+
+// Later on we can extend client info to include information about processing speed, etc.
+message WorkerInfo {
+	int32 worker_id = 1;
+}
+
+// Includes information about sucesss and failure
+message StatusCode {
+	int32 status = 1;
+}
+
+message PrevBatch { 
+	int32 worker_id = 1;
+
+	int32 prev_data_indx = 2;
+}
+
+message NextBatch { 
+	int32 worker_id = 1;
+
+	int32 data_indx = 2;
+}
+
+message empty {
+}
